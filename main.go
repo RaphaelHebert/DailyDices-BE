@@ -5,6 +5,8 @@ import (
 	"log"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/requestid"
 )
 
 func dices(ctx *fiber.Ctx) error {
@@ -14,6 +16,10 @@ func dices(ctx *fiber.Ctx) error {
 
 func main(){
 	app := fiber.New()
+	
+	app.Use(logger.New())
+	app.Use(requestid.New())
+
 	app.Get("/", dices)
 	err := app.Listen(":8080")
 	if err != nil {
