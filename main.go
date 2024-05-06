@@ -111,6 +111,10 @@ func getAllUsers(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(s)
 }
 
+func hello(ctx *fiber.Ctx) error {
+	return ctx.Status(fiber.StatusOK).SendString("you accessed a protected route")
+}
+
 func createUser(ctx *fiber.Ctx) error {
 	newUser := models.User{}
 	
@@ -139,6 +143,8 @@ func main(){
 
 	app.Use(logger.New())
 	app.Use(requestid.New())
+	app.Get("/", Protected(), hello)
+
 
 	user := app.Group("/user")
 	user.Get("/all", getAllUsers)
