@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 
 	"github.com/RaphaelHebert/DailyDices-BE/models"
 	"github.com/gofiber/fiber/v2"
@@ -24,6 +25,30 @@ func dices(ctx *fiber.Ctx) error {
 	res := fmt.Sprintf("%v", dices)
 	return ctx.Status(fiber.StatusOK).JSON(res)
 }
+
+func login(ctx *fiber.Ctx) error {
+	var u models.User
+
+	ctx.Set("Content-Type", "application/json")
+	ctx.BodyParser(&u)
+
+  	fmt.Printf("login: user %v requesting login", u)
+  
+	// TODO retrieve user from DB
+  	if u.Email == "joe@mymail.com" && u.Password == "somehash" {
+		tokenString, err := CreateToken(u.Username, u.Email)
+		if err != nil {
+			ctx.SendStatus(fiber.StatusInternalServerError)
+		}
+		ctx.Status(fiber.StatusOK)
+		ctx.SendString(tokenString)
+		return nil
+	} else {
+		ctx.SendStatus(http.StatusUnauthorized)
+		return nil
+	}
+}
+
 
 func getUser(ctx *fiber.Ctx) error {
 	uid := ctx.Query("id")
@@ -97,6 +122,7 @@ func createUser(ctx *fiber.Ctx) error {
 	user := models.User{
 		Username: newUser.Username,
 		Email: newUser.Email,
+		Password: newUser.Password,
 	}
 	newUuid := uuid.NewString()
 	UsersList[newUuid] = user
@@ -114,14 +140,16 @@ func main(){
 	app.Use(logger.New())
 	app.Use(requestid.New())
 
-	app.Get("/", dices)
-
 	user := app.Group("/user")
 	user.Get("/all", getAllUsers)
 	user.Get("/", getUser)
 	user.Post("/", createUser)
 	user.Delete("/", deleteUser)
 	user.Put("/", updateUser)
+
+	app.Get("/login", login)
+	app.Get("/", dices)
+
 	// to display dummy data
 	fmt.Println("mockUUID:", MockUUID)
 
