@@ -28,6 +28,9 @@ func dices(ctx *fiber.Ctx) error {
 	}
 
 	dices := RollDices(n)
+
+        // Convert byte slice to slice of integers
+       
 	// TODO add info such as dateTime
 	// if uid != "" {
 	// 	Scores[uuid.NewString()] = models.Score{
@@ -35,8 +38,8 @@ func dices(ctx *fiber.Ctx) error {
 	// 		Score: dices,
 	// 	}
 	// }
-	res := fmt.Sprintf("%v", dices)
-	return ctx.Status(fiber.StatusOK).JSON(res)
+
+	return ctx.Status(fiber.StatusOK).JSON(dices)
 }
 
 func login(ctx *fiber.Ctx) error {
