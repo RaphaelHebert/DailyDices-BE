@@ -27,13 +27,14 @@ func RollDices(i int) []models.Dice {
 // ---------------------- TOKEN ----------------------------//
 var secretKey = []byte(env.Get("SECRET_KEY", ""))
 
-func CreateToken(username, email string) (string, error) {
+func CreateToken(username, email, uid string) (string, error) {
 	var expirationTime = time.Minute * 60
 
     token := jwt.NewWithClaims(jwt.SigningMethodHS256, 
         jwt.MapClaims{ 
 			"username": username,
 			"email": email, 
+			"uid": uid,
 			"exp": time.Now().Add(expirationTime).Unix(), 
         })
 
