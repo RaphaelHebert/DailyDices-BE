@@ -45,7 +45,7 @@ func UpdateUser(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
-	
+	newUser.Password = db.UsersList[uid].Password
 	db.UsersList[uid] = newUser
 
 	return ctx.Status(fiber.StatusAccepted).JSON(newUser)
