@@ -1,10 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
-	"github.com/RaphaelHebert/DailyDices-BE/db"
 	"github.com/RaphaelHebert/DailyDices-BE/router"
 
 	"github.com/gofiber/fiber/v2"
@@ -21,9 +19,6 @@ func main(){
 	app.Use(requestid.New())
 
 	router.SetupRoutes(app)
-	
-	// to display dummy data
-	fmt.Println("mockUUID:", db.MockUUID)
 
 	err := app.Listen(":8080")
 	if err != nil {

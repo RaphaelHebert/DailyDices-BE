@@ -2,24 +2,29 @@ package db
 
 import (
 	"github.com/RaphaelHebert/DailyDices-BE/model"
-	"github.com/google/uuid"
 )
 
-var MockUUID = uuid.NewString()
 
 var UsersList = model.Users{
-		MockUUID: {
+		"mockedUID": {
 			Username:  "Joe",
 			Email:    "joe@mymail.com",
 			Password: "someHash",
+			UID: "mockedUID",
 		},
 		// Add more users as needed
 	}
 
 var Scores = model.Scores{
-	"scoreId234deq": model.Score{
-		Score: []model.Dice{1, 3, 5},
-		UID: "23wfsw4rfser34",
+	"mockedUID": {
+		model.Score{
+			Score: []model.Dice{1, 3, 5},
+			UID: "23wfsw4rfser34",
+		},
+		model.Score{
+			Score: []model.Dice{3, 3, 6},
+			UID: "dfs4wrfsfge5",
+		},
 	},
-	// Add more scores as needed
-}
+		// Add more scores as needed
+	}

@@ -29,10 +29,10 @@ type Dice int
 
 type Score struct{
 	Score []Dice
-	UID string
+	UID string // uid of the score, to be replace by date
 }
 
-type Scores map[string]Score
+type Scores map[string][]Score
 
 
 

@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/RaphaelHebert/DailyDices-BE/handler"
+	"github.com/RaphaelHebert/DailyDices-BE/middleware"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -20,5 +21,6 @@ func SetupRoutes(app *fiber.App) {
 
 	// Auth
 	app.Post("/login", handler.Login)
-	app.Get("/roll-dices", handler.Dices)
+	app.Get("/roll-dices", middleware.Protected(), handler.Dices)
+	app.Get("/scores", middleware.Protected(), handler.Scores)
 }
