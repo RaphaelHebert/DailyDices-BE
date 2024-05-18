@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/RaphaelHebert/DailyDices-BE/db"
@@ -30,16 +29,13 @@ func Dices(ctx *fiber.Ctx) error {
     // Convert byte slice to slice of integers
        
 	// TODO add info such as dateTime
-	s := []model.Score{}
+	s := model.Score{Score: dices, UID: uuid.NewString()}
+	sl := []model.Score{ }
 	if(len(db.Scores[uid]) == 0 ){
-		db.Scores[uid] = s
+		db.Scores[uid] = sl
 	}
 	if uid != "" {
-		db.Scores[uid] = append(db.Scores[uid], model.Score{
-			UID: uuid.NewString(),
-			Score: dices,
-		})
+		db.Scores[uid] = append(db.Scores[uid], s)
 	}
-	fmt.Println(db.Scores)
-	return ctx.Status(fiber.StatusOK).JSON(dices)
+	return ctx.Status(fiber.StatusOK).JSON(s)
 }

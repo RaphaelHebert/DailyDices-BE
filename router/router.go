@@ -22,5 +22,5 @@ func SetupRoutes(app *fiber.App) {
 	// Auth
 	app.Post("/login", handler.Login)
 	app.Get("/roll-dices", middleware.Protected(), handler.Dices)
-	app.Get("/scores", middleware.Protected(), handler.Scores)
+	app.Get("/scores", middleware.Protected(),handler.Scores)
 }

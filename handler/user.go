@@ -89,6 +89,7 @@ func CreateUser(ctx *fiber.Ctx) error {
 		UID: uuid.NewString(),
 	}
 	db.UsersList[user.UID] = user
+	db.Scores[user.UID] = []model.Score{}
 	// TODO connect to db and drop dummy data
 	// res, err := json.Marshal(UsersList[newUuid])
 	// if err != nil {

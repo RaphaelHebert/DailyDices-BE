@@ -11,7 +11,7 @@ import (
 var secretKey = []byte(env.Get("SECRET_KEY", ""))
 
 func CreateToken(username, email, uid string) (string, error) {
-	var expirationTime = time.Minute * 60
+	var expirationTime = time.Minute * 600
 
     token := jwt.NewWithClaims(jwt.SigningMethodHS256, 
         jwt.MapClaims{ 
