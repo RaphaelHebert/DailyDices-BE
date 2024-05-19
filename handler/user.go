@@ -18,10 +18,17 @@ func GetUser(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.SendStatus(fiber.StatusBadRequest)
 	}
-	res, err := json.Marshal(db.UsersList[uid])
+	u := db.UsersList[uid]
+	up := model.PublicUser{
+		Username: u.Username,
+		Email: u.Email,
+		UID: u.UID,
+	}
+	res, err := json.Marshal(up)
 	if err != nil {
 		return ctx.SendStatus(fiber.StatusBadRequest)
 	}
+	
 	s := fmt.Sprintf("%s", res)
 	return ctx.Status(fiber.StatusOK).JSON(s)
 }
@@ -64,6 +71,7 @@ func DeleteUser(ctx *fiber.Ctx) error {
 
 func GetAllUsers(ctx *fiber.Ctx) error {
 	// TODO connect to db and drop dummy data
+	// TODO update to return PublicUser
 	res, err := json.Marshal(db.UsersList)
 	if err != nil {
 		return ctx.SendStatus(fiber.StatusBadRequest)
