@@ -14,6 +14,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+var collection = config.Mg.Db.Collection("users")
+
 func GetUser(ctx *fiber.Ctx) error {
 	var user model.User
 
@@ -24,7 +26,7 @@ func GetUser(ctx *fiber.Ctx) error {
 		return ctx.SendStatus(fiber.StatusBadRequest)
 	}
 
-	err = config.Mg.Db.Collection("users").FindOne(ctx.Context(), bson.M{"uid": uid}).Decode(&user)
+	err = collection.FindOne(ctx.Context(), bson.M{"uid": uid}).Decode(&user)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			// Handle no documents found
@@ -100,16 +102,19 @@ func CreateUser(ctx *fiber.Ctx) error {
 		Password: string(password),
 		UID: uuid.NewString(),
 	}
-	db.UsersList[user.UID] = user
-	db.Scores[user.UID] = []model.Score{}
-	// TODO connect to db and drop dummy data
-	// res, err := json.Marshal(UsersList[newUuid])
-	// if err != nil {
-	// 	return ctx.SendStatus(fiber.StatusBadRequest)
-	// }
-	return ctx.Status(fiber.StatusAccepted).JSON(model.UserPublic{
-		Username: newUser.Username,
-		Email: newUser.Email,
-		UID: user.UID,
-	})
+
+	iu, err := collection.InsertOne(ctx.Context(), user)
+	if err != nil {
+		return ctx.Status(500).SendString(err.Error())
+	}
+
+	filter := bson.D{{Key: "_id", Value: iu.InsertedID}}
+	createdRecord := collection.FindOne(ctx.Context(), filter)
+
+	// decode the Mongo record into model.User
+	createdUser := &model.User{}
+	createdRecord.Decode(createdUser)
+
+	// return the created Employee in JSON format
+	return ctx.Status(201).JSON(createdUser)
 }
