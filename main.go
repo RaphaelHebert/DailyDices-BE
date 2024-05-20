@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	_ "github.com/RaphaelHebert/DailyDices-BE/config"
 	"github.com/RaphaelHebert/DailyDices-BE/router"
 
 	"github.com/gofiber/fiber/v2"
