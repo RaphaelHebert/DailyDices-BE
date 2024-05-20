@@ -14,7 +14,8 @@ import (
 )
 
 func GetUser(ctx *fiber.Ctx) error {
-	query := bson.D{{}}
+	uid := ctx.Query("id")
+	query := bson.D{{"uid", uid}}
 	cursor, err := config.Mg.Db.Collection("users").Find(ctx.Context(), query)
 		if err != nil {
 			fmt.Println("here")
