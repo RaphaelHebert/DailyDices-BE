@@ -4,33 +4,52 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/RaphaelHebert/DailyDices-BE/config"
 	"github.com/RaphaelHebert/DailyDices-BE/db"
 	"github.com/RaphaelHebert/DailyDices-BE/model"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/bson"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func GetUser(ctx *fiber.Ctx) error {
-	uid := ctx.Query("id")
-	// TODO connect to db and drop dummy data
-	err := uuid.Validate(uid)
-	if err != nil {
-		return ctx.SendStatus(fiber.StatusBadRequest)
+	query := bson.D{{}}
+	cursor, err := config.Mg.Db.Collection("users").Find(ctx.Context(), query)
+		if err != nil {
+			fmt.Println("here")
+			return ctx.Status(500).SendString(err.Error())
+		}
+
+	var users []model.User = make([]model.User, 0)
+
+	if err := cursor.All(ctx.Context(), &users); err != nil {
+		fmt.Println("here2")
+
+		return ctx.Status(500).SendString(err.Error())
+
 	}
-	u := db.UsersList[uid]
-	up := model.PublicUser{
-		Username: u.Username,
-		Email: u.Email,
-		UID: u.UID,
-	}
-	res, err := json.Marshal(up)
-	if err != nil {
-		return ctx.SendStatus(fiber.StatusBadRequest)
-	}
+		// return employees list in JSON format
+	return ctx.JSON(users)
+	// uid := ctx.Query("id")
+	// // TODO connect to db and drop dummy data
+	// err := uuid.Validate(uid)
+	// if err != nil {
+	// 	return ctx.SendStatus(fiber.StatusBadRequest)
+	// }
+	// u := db.UsersList[uid]
+	// up := model.PublicUser{
+	// 	Username: u.Username,
+	// 	Email: u.Email,
+	// 	UID: u.UID,
+	// }
+	// res, err := json.Marshal(up)
+	// if err != nil {
+	// 	return ctx.SendStatus(fiber.StatusBadRequest)
+	// }
 	
-	s := fmt.Sprintf("%s", res)
-	return ctx.Status(fiber.StatusOK).JSON(s)
+	// s := fmt.Sprintf("%s", res)
+	// return ctx.Status(fiber.StatusOK).JSON(s)
 }
 
 func UpdateUser(ctx *fiber.Ctx) error {
