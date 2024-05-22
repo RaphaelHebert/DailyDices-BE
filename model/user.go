@@ -1,14 +1,14 @@
 package model
 
 type User struct {
-	UID      string   `json:"uid"`
+	UID      string   `json:"uid" bson:"_id,omitempty"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
 type PublicUser struct {
-	UID      string   `json:"uid"`
+	UID      string   `json:"uid" bson:"_id,omitempty"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
 }
@@ -19,9 +19,8 @@ type LoginInput struct {
 }
 
 type UserPublic struct {
-	UID      string   `json:"uid"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
+	Username string `json:"username" bson:"username"`
+	Email    string `json:"email"  bson:"email"`
 }
 
 type UserLogin struct {

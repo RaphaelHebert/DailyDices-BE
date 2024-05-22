@@ -14,13 +14,14 @@ func SetupRoutes(app *fiber.App) {
 	// User
 	user := app.Group("/user")
 	user.Get("/all", handler.GetAllUsers)
-	user.Get("/", handler.GetUser)
+	user.Get("/:id", handler.GetUser)
 	user.Post("/", handler.CreateUser)
 	user.Delete("/", handler.DeleteUser)
-	user.Put("/", handler.UpdateUser)
+	user.Put("/:id", handler.UpdateUser)
 
 	// Auth
 	app.Post("/login", handler.Login)
+	app.Get("/token", middleware.Protected(), handler.Token)
 	app.Get("/roll-dices", middleware.Protected(), handler.Dices)
 	app.Get("/scores", middleware.Protected(),handler.Scores)
 }

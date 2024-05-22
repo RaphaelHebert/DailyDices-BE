@@ -10,6 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -19,14 +20,16 @@ var collection = config.Mg.Db.Collection("users")
 func GetUser(ctx *fiber.Ctx) error {
 	var user model.User
 
-	uid := ctx.Query("id")
+	uid := ctx.Params("id")
+	
+	_id, err := primitive.ObjectIDFromHex(uid)
+		if err != nil {
+			return ctx.Status(500).SendString(err.Error())
+		}
 
-	err := uuid.Validate(uid)
-	if err != nil {
-		return ctx.SendStatus(fiber.StatusBadRequest)
-	}
+	filter := bson.D{{Key: "_id", Value: _id}}
 
-	err = collection.FindOne(ctx.Context(), bson.M{"uid": uid}).Decode(&user)
+	err = collection.FindOne(ctx.Context(), filter).Decode(&user)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			// Handle no documents found
@@ -36,32 +39,49 @@ func GetUser(ctx *fiber.Ctx) error {
 		return ctx.Status(500).SendString(err.Error())
 	}
 
-	return ctx.JSON(user)
+	return ctx.Status(fiber.StatusOK).JSON(user)
 }
 
 func UpdateUser(ctx *fiber.Ctx) error {
-	uid := ctx.Query("id")
-	// TODO connect to db and drop dummy data
-	err := uuid.Validate(uid)
+	params := ctx.Params("id")
+	uid, err := primitive.ObjectIDFromHex(params)
+	// the provided ID might be invalid ObjectID
 	if err != nil {
-		return ctx.SendStatus(fiber.StatusBadRequest)
+		return ctx.SendStatus(400)
 	}
 
-	// check is user exists
-	if _, ok := db.UsersList[uid]; !ok {
-		return ctx.SendStatus(fiber.StatusBadRequest)
+	user := model.PublicUser{}
+	// Parse body into struct
+	err = ctx.BodyParser(&user); 
+	if err != nil {
+		fmt.Println("ehre")
+		return ctx.Status(400).SendString(err.Error())
 	}
 
-	newUser := model.User{}
+	// Find the user and update its data
+	query := bson.D{{Key: "_id", Value: uid}}
+	update := bson.D{
+		{Key: "$set",
+			Value: bson.D{
+				{Key: "username", Value: user.Username},
+				{Key: "email", Value: user.Email},
+			},
+		},
+	}
 	
-	err = ctx.BodyParser(&newUser)
-	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).SendString(err.Error())
-	}
-	newUser.Password = db.UsersList[uid].Password
-	db.UsersList[uid] = newUser
+	err = collection.FindOneAndUpdate(ctx.Context(), query, update).Err()
 
-	return ctx.Status(fiber.StatusAccepted).JSON(newUser)
+	fmt.Println("nu: ", user)
+	if err != nil {
+		// ErrNoDocuments means that the filter did not match any documents in the collection
+		if err == mongo.ErrNoDocuments {
+			return ctx.SendStatus(404)
+		}
+		return ctx.SendStatus(500)
+	}
+	user.UID = params
+	// return the updated user
+	return ctx.Status(fiber.StatusAccepted).JSON(user)
 }
 
 func DeleteUser(ctx *fiber.Ctx) error {
@@ -100,7 +120,7 @@ func CreateUser(ctx *fiber.Ctx) error {
 		Username: newUser.Username,
 		Email: newUser.Email,
 		Password: string(password),
-		UID: uuid.NewString(),
+		UID: "",
 	}
 
 	iu, err := collection.InsertOne(ctx.Context(), user)
