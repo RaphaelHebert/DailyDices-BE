@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/mail"
 
 	"github.com/RaphaelHebert/DailyDices-BE/helper"
@@ -10,6 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -22,10 +24,22 @@ func CheckPasswordHash(password, hash string) bool {
 
 func getUser(k string, v string) (*model.User, error) {
 	var user model.User
+	var _id primitive.ObjectID	
+	var err error
+	var filter primitive.D
+	if k == "_id" {
+		_id, err = primitive.ObjectIDFromHex(v)
+		filter = bson.D{{Key: k, Value: _id}}
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		filter = bson.D{{Key: k, Value: v}}
+	}
 
-	filter := bson.D{{Key: k, Value: v}}
-
-	err := collection.FindOne(context.TODO(), filter).Decode(&user)
+	
+	err = collection.FindOne(context.TODO(), filter).Decode(&user)
+	fmt.Println(err)
 	if err != nil {
 	if err == mongo.ErrNoDocuments {
 		// Handle no documents found
@@ -94,17 +108,19 @@ func Login(ctx *fiber.Ctx) error {
 
 // Login get user and password
 func Token(ctx *fiber.Ctx) error {
-
 	user := ctx.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	uid := claims["uid"].(string)
-	u, err := getUser("uid", uid)
+	fmt.Println(uid)
+	fmt.Println(user)
+	
+	u, err := getUser("_id", uid)
 	if err != nil {
+		fmt.Println("no user")
 		return ctx.SendStatus(fiber.StatusInternalServerError)
 	}
 
 	token, err := helper.CreateToken(u.Username, u.Email, uid)
-
 	if err != nil {
 		return ctx.SendStatus(fiber.StatusInternalServerError)
 	}
