@@ -8,7 +8,6 @@ import (
 	"github.com/RaphaelHebert/DailyDices-BE/db"
 	"github.com/RaphaelHebert/DailyDices-BE/model"
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -85,14 +84,31 @@ func UpdateUser(ctx *fiber.Ctx) error {
 }
 
 func DeleteUser(ctx *fiber.Ctx) error {
-	uid := ctx.Query("id")
-	// TODO connect to db and drop dummy data
-	err := uuid.Validate(uid)
+	params := ctx.Params("id")
+	uid, err := primitive.ObjectIDFromHex(params)
+	// the provided ID might be invalid ObjectID
 	if err != nil {
-		return ctx.SendStatus(fiber.StatusBadRequest)
+		return ctx.SendStatus(400)
 	}
-	delete(db.UsersList, uid)
-	return ctx.SendStatus(fiber.StatusNoContent)
+
+	// find and delete the user with the given ID
+	query := bson.D{{Key: "_id", Value: uid}}
+
+	// TODO delete scores in scores collection ?
+	
+	result, err := collection.DeleteOne(ctx.Context(), &query)
+
+	if err != nil {
+		return ctx.SendStatus(500)
+	}
+
+	// the employee might not exist
+	if result.DeletedCount < 1 {
+		return ctx.SendStatus(404)
+	}
+
+	// the record was deleted
+	return ctx.SendStatus(204)
 }
 
 func GetAllUsers(ctx *fiber.Ctx) error {
