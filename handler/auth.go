@@ -1,59 +1,18 @@
 package handler
 
 import (
-	"context"
-	"errors"
 	"fmt"
-	"net/mail"
 
 	"github.com/RaphaelHebert/DailyDices-BE/helper"
 	"github.com/RaphaelHebert/DailyDices-BE/model"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // CheckPasswordHash compare password with hash
 func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
-}
-
-func getUser(k string, v string) (*model.User, error) {
-	var user model.User
-	var _id primitive.ObjectID	
-	var err error
-	var filter primitive.D
-	if k == "_id" {
-		_id, err = primitive.ObjectIDFromHex(v)
-		filter = bson.D{{Key: k, Value: _id}}
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		filter = bson.D{{Key: k, Value: v}}
-	}
-
-	
-	err = collection.FindOne(context.TODO(), filter).Decode(&user)
-	fmt.Println(err)
-	if err != nil {
-	if err == mongo.ErrNoDocuments {
-		// Handle no documents found
-		return nil, errors.New("No document found")
-	}
-		// Handle other errors
-		return nil, err
-	}
-
-	return &user, nil
-}
-
-func isEmail(email string) bool {
-	_, err := mail.ParseAddress(email)
 	return err == nil
 }
 
@@ -74,10 +33,10 @@ func Login(ctx *fiber.Ctx) error {
 	var err error
 
 	// user can checking by email or username
-	if isEmail(email) {
-		userModel, err = getUser("email", email)
+	if helper.IsEmail(email) {
+		userModel, err = helper.GetUser("email", email)
 	} else {
-		userModel, err = getUser("username", email)
+		userModel, err = helper.GetUser("username", email)
 	}
 
 	if err != nil {
@@ -114,7 +73,7 @@ func Token(ctx *fiber.Ctx) error {
 	fmt.Println(uid)
 	fmt.Println(user)
 	
-	u, err := getUser("_id", uid)
+	u, err := helper.GetUser("_id", uid)
 	if err != nil {
 		fmt.Println("no user")
 		return ctx.SendStatus(fiber.StatusInternalServerError)

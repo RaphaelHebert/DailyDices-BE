@@ -58,6 +58,15 @@ func UpdateUser(ctx *fiber.Ctx) error {
 		return ctx.Status(400).SendString(err.Error())
 	}
 
+	// Check if email is available
+	if _, err = helper.GetUser("email", user.Email); err == nil {
+		return ctx.Status(fiber.StatusBadRequest).SendString("Email is not available")
+	}
+	// Check if username is available
+	if _, err = helper.GetUser("username", user.Username); err == nil {
+		return ctx.Status(fiber.StatusBadRequest).SendString("Username is not available")
+	}
+
 	// Find the user and update its data
 	query := bson.D{{Key: "_id", Value: _id}}
 	update := bson.D{
@@ -132,14 +141,25 @@ func CreateUser(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 
-	// Define the password validation regex
-	
-
 	// Validate the password
 	if !helper.ValidatePassword(newUser.Password) {
 		return ctx.Status(fiber.StatusBadRequest).SendString("Password does not meet the requirements")
 	}
 
+	// Validate the email
+	if !helper.IsEmail(newUser.Email) {
+		return ctx.Status(fiber.StatusBadRequest).SendString("Email is not an email")
+	} 
+	// Check if email is available
+	if _, err = helper.GetUser("email", newUser.Email); err == nil {
+		return ctx.Status(fiber.StatusBadRequest).SendString("Email is not available")
+	}
+	// Check if username is available
+	if _, err = helper.GetUser("username", newUser.Username); err == nil {
+		return ctx.Status(fiber.StatusBadRequest).SendString("Username is not available")
+	}
+
+	// Insert new user
 	password, _ := bcrypt.GenerateFromPassword([]byte(newUser.Password), bcrypt.DefaultCost)
 
 	user := model.User{
@@ -154,13 +174,14 @@ func CreateUser(ctx *fiber.Ctx) error {
 		return ctx.Status(500).SendString(err.Error())
 	}
 
+	// Retrieve new user
 	filter := bson.D{{Key: "_id", Value: iu.InsertedID}}
 	createdRecord := collection.FindOne(ctx.Context(), filter)
 
-	// decode the Mongo record into model.User
+	// Decode the Mongo record into model.User
 	createdUser := &model.User{}
 	createdRecord.Decode(createdUser)
 
-	// return the created user in JSON format
+	// Return the created user in JSON format
 	return ctx.Status(201).JSON(createdUser)
 }
