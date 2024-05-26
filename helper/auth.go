@@ -2,31 +2,38 @@ package helper
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/gofor-little/env"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 )
+var secretKey []byte
+var err error
 
-var secretKey = []byte(env.Get("SECRET_KEY", ""))
 
 func CreateToken(username, email, uid string) (string, error) {
-	var expirationTime = time.Minute * 600
 
-    token := jwt.NewWithClaims(jwt.SigningMethodHS256, 
-        jwt.MapClaims{ 
-			"username": username,
-			"email": email, 
-			"uid": uid,
-			"exp": time.Now().Add(expirationTime).Unix(), 
-        })
+	err = env.Load(".env"); 
+	if err != nil {
+		log.Fatal("no env found")
+	}
+	secretKey = []byte(env.Get("SECRET_KEY", ""))
 
-    tokenString, err := token.SignedString(secretKey)
+	token := jwt.New(jwt.SigningMethodHS256)
+
+	claims := token.Claims.(jwt.MapClaims)
+	claims["username"] = username
+	claims["uid"] = uid
+	claims["email"] = email
+	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+
+	t, err := token.SignedString(secretKey)
     if err != nil {
     	return "", err
     }
 
- return tokenString, nil
+ return t, nil
 }
 
 func VerifyToken(tokenString string) error {

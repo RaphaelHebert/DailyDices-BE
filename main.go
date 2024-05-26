@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"github.com/RaphaelHebert/DailyDices-BE/config"
 	"github.com/RaphaelHebert/DailyDices-BE/router"
 
 	"github.com/gofiber/fiber/v2"
@@ -11,7 +12,12 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 )
 
+
+
 func main(){
+	// deconnect from db
+	defer config.Disconnect(config.Mc)
+
 	app := fiber.New()
 
     app.Use(cors.New())
@@ -20,8 +26,5 @@ func main(){
 
 	router.SetupRoutes(app)
 
-	err := app.Listen(":8080")
-	if err != nil {
-		log.Fatal(err)
-	}
+	log.Fatal(app.Listen(":8080"))
 }

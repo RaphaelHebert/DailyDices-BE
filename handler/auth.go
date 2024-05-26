@@ -1,13 +1,12 @@
 package handler
 
 import (
-	"errors"
-	"net/mail"
+	"fmt"
 
-	"github.com/RaphaelHebert/DailyDices-BE/db"
 	"github.com/RaphaelHebert/DailyDices-BE/helper"
 	"github.com/RaphaelHebert/DailyDices-BE/model"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -17,60 +16,10 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-func getUserByEmail(e string) (*model.User, error) {
-	// TODO: connect to DB
-	// db := database.DB
-	// var user model.User
-	// if err := db.Where(&model.User{Email: e}).First(&user).Error; err != nil {
-	// 	if errors.Is(err, gorm.ErrRecordNotFound) {
-	// 		return nil, nil
-	// 	}
-	// 	return nil, err
-	// }
-
-	// return dummy data
-	for _, value :=  range db.UsersList {
-		if value.Email == e {
-			return &value, nil
-		}
-	}
-	return nil, errors.New("user not found")
-}
-
-func getUserByUsername(u string) (*model.User, error) {
-	// TODO connect to db
-	// db := database.DB
-	// var user model.User
-	// if err := db.Where(&model.User{Username: u}).First(&user).Error; err != nil {
-	// 	if errors.Is(err, gorm.ErrRecordNotFound) {
-	// 		return nil, nil
-	// 	}
-	// 	return nil, err
-	// }
-	// return &user, nil
-
-	// return dummy data
-	for _, value :=  range db.UsersList {
-		if value.Username == u {
-			return &value, nil
-		}
-	}
-	return nil, errors.New("user not found")
-}
-
-func isEmail(email string) bool {
-	_, err := mail.ParseAddress(email)
-	return err == nil
-}
-
 // Login get user and password
 func Login(ctx *fiber.Ctx) error {
-	type LoginInput struct {
-		Email string `json:"email"`
-		Password string `json:"password"`
-	}
 
-	var input = &LoginInput{}
+	var input = &model.LoginInput{}
 	var userData model.User
 
 	if err := ctx.BodyParser(input); err != nil {
@@ -84,10 +33,10 @@ func Login(ctx *fiber.Ctx) error {
 	var err error
 
 	// user can checking by email or username
-	if isEmail(email) {
-		userModel, err = getUserByEmail(email)
+	if helper.IsEmail(email) {
+		userModel, err = helper.GetUser("email", email)
 	} else {
-		userModel, err = getUserByUsername(email)
+		userModel, err = helper.GetUser("username", email)
 	}
 
 	if err != nil {
@@ -109,6 +58,28 @@ func Login(ctx *fiber.Ctx) error {
 	
 	token, err := helper.CreateToken(userData.Username, userData.Email, string(userData.UID))
 
+	if err != nil {
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	return ctx.JSON(fiber.Map{"status": "success", "message": "Success login", "data": token})
+}
+
+// Login get user and password
+func Token(ctx *fiber.Ctx) error {
+	user := ctx.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	uid := claims["uid"].(string)
+	fmt.Println(uid)
+	fmt.Println(user)
+	
+	u, err := helper.GetUser("_id", uid)
+	if err != nil {
+		fmt.Println("no user")
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	token, err := helper.CreateToken(u.Username, u.Email, uid)
 	if err != nil {
 		return ctx.SendStatus(fiber.StatusInternalServerError)
 	}
