@@ -6,6 +6,7 @@ import (
 
 	"github.com/RaphaelHebert/DailyDices-BE/config"
 	"github.com/RaphaelHebert/DailyDices-BE/db"
+	"github.com/RaphaelHebert/DailyDices-BE/helper"
 	"github.com/RaphaelHebert/DailyDices-BE/model"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
@@ -22,9 +23,9 @@ func GetUser(ctx *fiber.Ctx) error {
 	uid := ctx.Params("id")
 	
 	_id, err := primitive.ObjectIDFromHex(uid)
-		if err != nil {
-			return ctx.Status(500).SendString(err.Error())
-		}
+	if err != nil {
+		return ctx.SendStatus(400)
+	}
 
 	filter := bson.D{{Key: "_id", Value: _id}}
 
@@ -43,7 +44,7 @@ func GetUser(ctx *fiber.Ctx) error {
 
 func UpdateUser(ctx *fiber.Ctx) error {
 	params := ctx.Params("id")
-	uid, err := primitive.ObjectIDFromHex(params)
+	_id, err := primitive.ObjectIDFromHex(params)
 	// the provided ID might be invalid ObjectID
 	if err != nil {
 		return ctx.SendStatus(400)
@@ -58,7 +59,7 @@ func UpdateUser(ctx *fiber.Ctx) error {
 	}
 
 	// Find the user and update its data
-	query := bson.D{{Key: "_id", Value: uid}}
+	query := bson.D{{Key: "_id", Value: _id}}
 	update := bson.D{
 		{Key: "$set",
 			Value: bson.D{
@@ -95,15 +96,16 @@ func DeleteUser(ctx *fiber.Ctx) error {
 	query := bson.D{{Key: "_id", Value: uid}}
 
 	// TODO delete scores in scores collection ?
-	
-	result, err := collection.DeleteOne(ctx.Context(), &query)
 
+	result, err := collection.DeleteOne(ctx.Context(), &query)
+	fmt.Println("not deleting ", result)
 	if err != nil {
 		return ctx.SendStatus(500)
 	}
 
-	// the employee might not exist
+	// the user might not exist
 	if result.DeletedCount < 1 {
+		fmt.Println("not deleting ", uid)
 		return ctx.SendStatus(404)
 	}
 
@@ -129,7 +131,15 @@ func CreateUser(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
+
+	// Define the password validation regex
 	
+
+	// Validate the password
+	if !helper.ValidatePassword(newUser.Password) {
+		return ctx.Status(fiber.StatusBadRequest).SendString("Password does not meet the requirements")
+	}
+
 	password, _ := bcrypt.GenerateFromPassword([]byte(newUser.Password), bcrypt.DefaultCost)
 
 	user := model.User{
@@ -151,6 +161,6 @@ func CreateUser(ctx *fiber.Ctx) error {
 	createdUser := &model.User{}
 	createdRecord.Decode(createdUser)
 
-	// return the created Employee in JSON format
+	// return the created user in JSON format
 	return ctx.Status(201).JSON(createdUser)
 }

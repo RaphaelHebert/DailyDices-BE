@@ -57,11 +57,6 @@ func Connect() (*mongo.Client, error) {
 		Client: client,
 		Db:     db,
 	}
-
-	fmt.Println(Mg.Db)
-	fmt.Println(Mg.Client)
-
-
 	return client, nil
 }
 
