@@ -5,6 +5,7 @@ import (
 
 	"github.com/RaphaelHebert/DailyDices-BE/config"
 	"github.com/RaphaelHebert/DailyDices-BE/router"
+	"github.com/gofor-little/env"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -16,6 +17,10 @@ import (
 
 func main(){
 	// deconnect from db
+	err := env.Load(".env"); 
+	if err != nil {
+		panic(err)
+	}
 	defer config.Disconnect(config.Mc)
 
 	app := fiber.New()
@@ -31,5 +36,10 @@ func main(){
 	app.Use(requestid.New())
 
 	router.SetupRoutes(app)
-	log.Fatal(app.Listen(":8080"))
+	// TODO: updated dev and prod environment management
+	port := ":8080"
+	if uri := env.Get("MONGODB_URI", ""); uri != "" {
+		port = ":80"
+	}
+	log.Fatal(app.Listen(port))
 }
