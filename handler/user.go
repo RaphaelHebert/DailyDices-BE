@@ -42,6 +42,7 @@ func GetUser(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(user)
 }
 
+
 func UpdateUser(ctx *fiber.Ctx) error {
 	params := ctx.Params("id")
 	_id, err := primitive.ObjectIDFromHex(params)
@@ -59,14 +60,18 @@ func UpdateUser(ctx *fiber.Ctx) error {
 	}
 
 	// Check if email is available
-	if _, err = helper.GetUser("email", user.Email); err == nil {
-		return ctx.Status(fiber.StatusBadRequest).SendString("Email is not available")
-	}
-	// Check if username is available
-	if _, err = helper.GetUser("username", user.Username); err == nil {
-		return ctx.Status(fiber.StatusBadRequest).SendString("Username is not available")
+	if uf, err := helper.GetUser("email", user.Email); err == nil {
+		if uf.UID != params {
+			return ctx.Status(fiber.StatusBadRequest).SendString("Email is not available")
+		} 
 	}
 
+	// Check if username is available
+	if uf, err := helper.GetUser("username", user.Username); err == nil {
+		if uf.UID != params {
+			return ctx.Status(fiber.StatusBadRequest).SendString("Username is not available")
+		}
+	}
 	// Find the user and update its data
 	query := bson.D{{Key: "_id", Value: _id}}
 	update := bson.D{
@@ -135,7 +140,6 @@ func GetAllUsers(ctx *fiber.Ctx) error {
 
 func CreateUser(ctx *fiber.Ctx) error {
 	newUser := model.User{}
-	
 	err := ctx.BodyParser(&newUser)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).SendString(err.Error())

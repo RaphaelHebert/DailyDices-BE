@@ -36,9 +36,13 @@ func Connect() (*mongo.Client, error) {
 	var dbName = "dices"
 	var user = env.Get("MONGO_USER", "")
 	var password = env.Get("MONGO_PASSWORD", "")
-	var mongoURI = fmt.Sprintf("mongodb://%s:%s@localhost:27017/", user, password) + dbName + "?authSource=admin"
 
-	fmt.Println("connecting to db ",dbName)
+	var mongoURI = fmt.Sprintf("mongodb://%s:%s@localhost:27017/", user, password) + dbName + "?authSource=admin"
+	if uri := env.Get("MONGODB_URI", ""); uri != "" {
+		fmt.Println("connecting to remote... ", uri)
+		mongoURI = uri
+	}
+	fmt.Println("connecting to db ", dbName)
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(mongoURI))
 	if err != nil {
 		return nil, err

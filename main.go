@@ -20,11 +20,16 @@ func main(){
 
 	app := fiber.New()
 
-    app.Use(cors.New())
+    app.Use(cors.New(cors.Config{
+		AllowOrigins:     "http://localhost:5173", // Adjust this to your Vite app's URL
+		AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
+		ExposeHeaders:    "Content-Length, Content-Type",
+		AllowCredentials: true,
+	}))
 	app.Use(logger.New())
 	app.Use(requestid.New())
 
 	router.SetupRoutes(app)
-
 	log.Fatal(app.Listen(":8080"))
 }
