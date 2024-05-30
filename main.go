@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/RaphaelHebert/DailyDices-BE/config"
@@ -35,11 +36,12 @@ func main(){
 	app.Use(logger.New())
 	app.Use(requestid.New())
 
+	fmt.Println("byebye")
 	router.SetupRoutes(app)
-	// TODO: updated dev and prod environment management
+	// TODO: updated dev and prod environment managementÍ
 	port := ":8080"
 	if uri := env.Get("MONGODB_URI", ""); uri != "" {
-		port = ":80"
+		port = ":8080"
 	}
 	log.Fatal(app.Listen(port))
 }

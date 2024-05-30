@@ -1,11 +1,9 @@
 package handler
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/RaphaelHebert/DailyDices-BE/config"
-	"github.com/RaphaelHebert/DailyDices-BE/db"
 	"github.com/RaphaelHebert/DailyDices-BE/helper"
 	"github.com/RaphaelHebert/DailyDices-BE/model"
 	"github.com/gofiber/fiber/v2"
@@ -55,7 +53,6 @@ func UpdateUser(ctx *fiber.Ctx) error {
 	// Parse body into struct
 	err = ctx.BodyParser(&user); 
 	if err != nil {
-		fmt.Println("ehre")
 		return ctx.Status(400).SendString(err.Error())
 	}
 
@@ -128,14 +125,25 @@ func DeleteUser(ctx *fiber.Ctx) error {
 }
 
 func GetAllUsers(ctx *fiber.Ctx) error {
-	// TODO connect to db and drop dummy data
-	// TODO update to return PublicUser
-	res, err := json.Marshal(db.UsersList)
+	// get all records as a cursor
+	fmt.Println("ok user/all")
+	query := bson.D{{}}
+	cursor, err := collection.Find(ctx.Context(), query)
 	if err != nil {
-		return ctx.SendStatus(fiber.StatusBadRequest)
+		return ctx.Status(500).SendString(err.Error())
 	}
-	s := fmt.Sprintf("%s", res)
-	return ctx.Status(fiber.StatusOK).JSON(s)
+
+	var users []model.User = make([]model.User, 0)
+
+	// iterate the cursor and decode each item into a users
+	if err := cursor.All(ctx.Context(), &users); err != nil {
+		return ctx.Status(500).SendString(err.Error())
+
+	}
+	fmt.Println(users)
+
+	// return users list in JSON format
+	return ctx.JSON(users)
 }
 
 func CreateUser(ctx *fiber.Ctx) error {
