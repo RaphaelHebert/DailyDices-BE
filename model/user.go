@@ -1,10 +1,15 @@
 package model
 
+import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
 type User struct {
 	UID      string `json:"uid" bson:"_id,omitempty"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	IsAdmin  bool `json:"isadmin" bson:"isadmin"`
+	Scores 	[]Score `json:"scores" bson:"scores"`
 	Password string `json:"password"`
 }
 
@@ -12,6 +17,7 @@ type PublicUser struct {
 	UID      string `json:"uid" bson:"_id,omitempty"`
 	Username string `json:"username"`
 	IsAdmin  bool `json:"isadmin" bson:"isadmin"`
+	Scores []Score `json:"scores" bson:"scores"`
 	Email    string `json:"email"`
 }
 
@@ -25,11 +31,12 @@ type Users map[string]User
 type Dice int
 
 type Score struct{
-	Score []Dice `json:"score"`
-	UID string  `json:"uid"`// uid of the score, to be replace by date
+	ID    primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+    Date  int64              `json:"date" bson:"date"`
+	Score []Dice             `json:"score"`
 }
 
-type Scores map[string][]Score
+type Scores []Score
 
 
 

@@ -83,7 +83,6 @@ func UpdateUser(ctx *fiber.Ctx) error {
 	
 	err = collection.FindOneAndUpdate(ctx.Context(), query, update).Err()
 
-	fmt.Println("nu: ", user)
 	if err != nil {
 		// ErrNoDocuments means that the filter did not match any documents in the collection
 		if err == mongo.ErrNoDocuments {
@@ -159,7 +158,6 @@ func DeleteUserById(ctx *fiber.Ctx) error {
 
 func GetAllUsers(ctx *fiber.Ctx) error {
 	// get all records as a cursor
-	fmt.Println("ok user/all")
 	query := bson.D{{}}
 	cursor, err := collection.Find(ctx.Context(), query)
 	if err != nil {
@@ -173,7 +171,6 @@ func GetAllUsers(ctx *fiber.Ctx) error {
 		return ctx.Status(500).SendString(err.Error())
 
 	}
-	fmt.Println(users)
 
 	// return users list in JSON format
 	return ctx.JSON(users)
@@ -212,6 +209,7 @@ func CreateUser(ctx *fiber.Ctx) error {
 		Email: newUser.Email,
 		Password: string(password),
 		IsAdmin: false,
+		Scores: []model.Score{},
 		UID: "",
 	}
 

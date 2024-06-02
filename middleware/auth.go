@@ -51,16 +51,13 @@ func Admin() fiber.Handler {
 
         if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
             // Check if isAdmin is true
-			fmt.Println(claims)
             if isAdmin, ok := claims["isadmin"].(bool); ok && isAdmin {
                 return ctx.Next()
             }
             return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
                 "error": "Admin privileges required",
             })
-        } else {
-			fmt.Println("hello")
-		}
+        }
 
         return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
             "error": "Invalid token claims",

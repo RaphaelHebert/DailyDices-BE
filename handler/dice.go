@@ -1,24 +1,39 @@
 package handler
 
 import (
+	"fmt"
 	"strconv"
+	"time"
 
-	"github.com/RaphaelHebert/DailyDices-BE/db"
 	"github.com/RaphaelHebert/DailyDices-BE/helper"
 	"github.com/RaphaelHebert/DailyDices-BE/model"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func Dices(ctx *fiber.Ctx) error {
-	// get uid from token
-	user := ctx.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
+	// Get uid from token
+	userToken := ctx.Locals("user").(*jwt.Token)
+	claims := userToken.Claims.(jwt.MapClaims)
 	uid := claims["uid"].(string)
 
-	// check user passed a number of dice
+	// Retrieve user
+	user, err := helper.GetUser("_id", uid)
+	if err != nil {
+		fmt.Println("no user")
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+	_id, err := primitive.ObjectIDFromHex(uid)
+	if err != nil {
+		return ctx.SendStatus(400)
+	}
+	
+
+	// Check user passed a number of dice
 	n, err := strconv.Atoi(ctx.Query("n"))
 	if err != nil {
 		n = 3
@@ -26,16 +41,30 @@ func Dices(ctx *fiber.Ctx) error {
 
 	dices := helper.RollDices(n)
 
-    // Convert byte slice to slice of integers
-       
-	// TODO add info such as dateTime
-	s := model.Score{Score: dices, UID: uuid.NewString()}
-	sl := []model.Score{ }
-	if(len(db.Scores[uid]) == 0 ){
-		db.Scores[uid] = sl
+	scoreId := primitive.NewObjectID()
+	s := model.Score{Score: dices, Date: time.Now().Unix(), ID: scoreId}
+	sl := append(user.Scores, s)
+
+	// Update User with new score
+	// Find the user and update its data
+	query := bson.D{{Key: "_id", Value: _id}}
+	update := bson.D{
+		{Key: "$set",
+			Value: bson.D{
+				{Key: "scores", Value: sl},
+			},
+		},
+	}		
+	err = collection.FindOneAndUpdate(ctx.Context(), query, update).Err()
+	
+	if err != nil {
+		// ErrNoDocuments means that the filter did not match any documents in the collection
+		if err == mongo.ErrNoDocuments {
+			return ctx.SendStatus(404)
+		}
+		return ctx.SendStatus(500)
 	}
-	if uid != "" {
-		db.Scores[uid] = append(db.Scores[uid], s)
-	}
-	return ctx.Status(fiber.StatusOK).JSON(s)
+
+	// return the updated user
+	return ctx.Status(fiber.StatusAccepted).JSON(s)
 }

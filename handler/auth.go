@@ -49,6 +49,7 @@ func Login(ctx *fiber.Ctx) error {
 			Username: userModel.Username,
 			Email:    userModel.Email,
 			Password: userModel.Password,
+			Scores: userModel.Scores,
 			IsAdmin: userModel.IsAdmin,
 		}
 	}
@@ -58,7 +59,7 @@ func Login(ctx *fiber.Ctx) error {
 	}
 	
 	// admins (here false) are to be created by hand (insert manually in db)
-	token, err := helper.CreateToken(userData.IsAdmin, userData.Username, userData.Email, string(userData.UID))
+	token, err := helper.CreateToken(userData.IsAdmin, userData.Scores, userData.Username, userData.Email, string(userData.UID))
 
 	if err != nil {
 		return ctx.SendStatus(fiber.StatusInternalServerError)
@@ -79,7 +80,7 @@ func Token(ctx *fiber.Ctx) error {
 		return ctx.SendStatus(fiber.StatusInternalServerError)
 	}
 
-	token, err := helper.CreateToken(u.IsAdmin, u.Username, u.Email,  uid)
+	token, err := helper.CreateToken(u.IsAdmin, u.Scores, u.Username, u.Email,  uid)
 	if err != nil {
 		return ctx.SendStatus(fiber.StatusInternalServerError)
 	}

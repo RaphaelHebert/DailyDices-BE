@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/RaphaelHebert/DailyDices-BE/model"
 	"github.com/gofor-little/env"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -12,7 +13,7 @@ var secretKey []byte
 var err error
 
 
-func CreateToken(isAdmin bool, username, email, uid string) (string, error) {
+func CreateToken(isAdmin bool, scores model.Scores, username, email, uid string) (string, error) {
 
 	err = env.Load(".env"); 
 	if err != nil {
@@ -24,6 +25,7 @@ func CreateToken(isAdmin bool, username, email, uid string) (string, error) {
 
 	claims := token.Claims.(jwt.MapClaims)
 	claims["isadmin"] = isAdmin
+	claims["scores"] = scores
 	claims["username"] = username
 	claims["uid"] = uid
 	claims["email"] = email
