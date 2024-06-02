@@ -49,6 +49,7 @@ func Login(ctx *fiber.Ctx) error {
 			Username: userModel.Username,
 			Email:    userModel.Email,
 			Password: userModel.Password,
+			IsAdmin: userModel.IsAdmin,
 		}
 	}
 	// check password
@@ -56,7 +57,8 @@ func Login(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "error", "message": "Invalid identity or password", "data": nil})
 	}
 	
-	token, err := helper.CreateToken(userData.Username, userData.Email, string(userData.UID))
+	// admins (here false) are to be created by hand (insert manually in db)
+	token, err := helper.CreateToken(userData.IsAdmin, userData.Username, userData.Email, string(userData.UID))
 
 	if err != nil {
 		return ctx.SendStatus(fiber.StatusInternalServerError)
@@ -70,8 +72,6 @@ func Token(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	uid := claims["uid"].(string)
-	fmt.Println(uid)
-	fmt.Println(user)
 	
 	u, err := helper.GetUser("_id", uid)
 	if err != nil {
@@ -79,7 +79,7 @@ func Token(ctx *fiber.Ctx) error {
 		return ctx.SendStatus(fiber.StatusInternalServerError)
 	}
 
-	token, err := helper.CreateToken(u.Username, u.Email, uid)
+	token, err := helper.CreateToken(u.IsAdmin, u.Username, u.Email,  uid)
 	if err != nil {
 		return ctx.SendStatus(fiber.StatusInternalServerError)
 	}

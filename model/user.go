@@ -4,14 +4,14 @@ type User struct {
 	UID      string `json:"uid" bson:"_id,omitempty"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
-	IsAdmin  string `json:"isAdmin"`
+	IsAdmin  bool `json:"isadmin" bson:"isadmin"`
 	Password string `json:"password"`
 }
 
 type PublicUser struct {
 	UID      string `json:"uid" bson:"_id,omitempty"`
 	Username string `json:"username"`
-	IsAdmin  string `json:"isAdmin"`
+	IsAdmin  bool `json:"isadmin" bson:"isadmin"`
 	Email    string `json:"email"`
 }
 

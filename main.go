@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/RaphaelHebert/DailyDices-BE/config"
@@ -36,7 +35,6 @@ func main(){
 	app.Use(logger.New())
 	app.Use(requestid.New())
 
-	fmt.Println("byebye")
 	router.SetupRoutes(app)
 	// TODO: updated dev and prod environment managementÍ
 	port := ":8080"

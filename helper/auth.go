@@ -12,7 +12,7 @@ var secretKey []byte
 var err error
 
 
-func CreateToken(username, email, uid string) (string, error) {
+func CreateToken(isAdmin bool, username, email, uid string) (string, error) {
 
 	err = env.Load(".env"); 
 	if err != nil {
@@ -23,6 +23,7 @@ func CreateToken(username, email, uid string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
+	claims["isadmin"] = isAdmin
 	claims["username"] = username
 	claims["uid"] = uid
 	claims["email"] = email

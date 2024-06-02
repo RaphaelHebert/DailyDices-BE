@@ -7,6 +7,7 @@ import (
 	"github.com/RaphaelHebert/DailyDices-BE/helper"
 	"github.com/RaphaelHebert/DailyDices-BE/model"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -96,6 +97,38 @@ func UpdateUser(ctx *fiber.Ctx) error {
 }
 
 func DeleteUser(ctx *fiber.Ctx) error {
+	user := ctx.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	id := claims["uid"].(string)
+	
+	uid, err := primitive.ObjectIDFromHex(id)
+	// the provided ID might be invalid ObjectID
+	if err != nil {
+		return ctx.SendStatus(400)
+	}
+
+	// find and delete the user with the given ID
+	query := bson.D{{Key: "_id", Value: uid}}
+
+	// TODO delete scores in scores collection ?
+
+	result, err := collection.DeleteOne(ctx.Context(), &query)
+	fmt.Println("not deleting ", result)
+	if err != nil {
+		return ctx.SendStatus(500)
+	}
+
+	// the user might not exist
+	if result.DeletedCount < 1 {
+		fmt.Println("not deleting ", uid)
+		return ctx.SendStatus(404)
+	}
+
+	// the record was deleted
+	return ctx.SendStatus(204)
+}
+
+func DeleteUserById(ctx *fiber.Ctx) error {
 	params := ctx.Params("id")
 	uid, err := primitive.ObjectIDFromHex(params)
 	// the provided ID might be invalid ObjectID
@@ -178,6 +211,7 @@ func CreateUser(ctx *fiber.Ctx) error {
 		Username: newUser.Username,
 		Email: newUser.Email,
 		Password: string(password),
+		IsAdmin: false,
 		UID: "",
 	}
 
